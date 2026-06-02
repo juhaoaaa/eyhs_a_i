@@ -1,19 +1,19 @@
-<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 비전: 실시간 사물 인식기.하주_아카이브</title>
+    <title>AI 비전: 실시간 사물 인식기</title>
 
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 
     <style>
-        /* 기본 배경 및 중앙 정렬을 위한 Flex 레이아웃 */
+        /* 🌌 애니메이션이 적용된 미래지향적 다크 백그라운드 */
         body {
-            font-family: 'Malgun Gothic', sans-serif;
+            font-family: 'Noto Sans KR', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #0f172a;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f051d 100%);
             color: #f8fafc;
             display: flex;
             flex-direction: column;
@@ -21,51 +21,74 @@
             justify-content: center;
             min-height: 100vh;
             box-sizing: border-box;
+            overflow-x: hidden;
         }
 
-        /* 메인 타이틀 스타일 */
+        /* ✨ 네온 그라데이션 타이틀 */
         h1 {
-            font-size: 1.5rem;
+            font-family: 'Orbitron', 'Noto Sans KR', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
             margin-bottom: 5px;
-            color: #38bdf8;
-            text-align: center;
+            background: linear-gradient(45deg, #00f2fe, #4facfe, #ff007f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 242, 254, 0.3);
+            letter-spacing: 1px;
         }
 
         p {
-            font-size: 0.9rem;
-            color: #94a3b8;
+            font-size: 0.95rem;
+            color: #a5b4fc;
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            text-transform: uppercase;
         }
 
-        /* 상태 창 스타일 */
+        /* 🔮 투명 유리 느낌의 글래스모피즘 상태 창 */
         #status {
-            font-weight: bold;
-            background: #1e293b;
-            padding: 8px 20px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 10px 25px;
             border-radius: 50px;
-            font-size: 13px;
-            border: 1px solid #334155;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
         }
 
-        /* ⭐️ 모바일 반응형 핵심: 영상이 들어갈 가운데 카드 박스 */
+        /* ⚡ 가동 중일 때 뿜어져 나오는 네온 글로우 효과 */
+        .status-active {
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4) !important;
+            border: 1px solid rgba(0, 242, 254, 0.5) !important;
+        }
+
+        /* 🖼️ 사이버 펑크 스타일의 메인 모니터 프레임 */
         #canvas-container {
             position: relative;
             width: 100%;
-            max-width: 500px; /* PC나 패드에서 너무 커지지 않도록 제한 */
-            aspect-ratio: 4 / 3; /* 카메라 해상도 비율 유지 */
+            max-width: 540px;
+            aspect-ratio: 4 / 3;
             background: #000;
-            border-radius: 16px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
-            border: 2px solid #334155;
+            /* 테두리 네온 하이라이트 */
+            border: 2px solid rgba(79, 172, 254, 0.4);
+            box-shadow: 
+                0 0 30px rgba(0, 242, 254, 0.15),
+                0 20px 40px rgba(0, 0, 0, 0.6),
+                inset 0 0 20px rgba(0, 242, 254, 0.2);
         }
 
-        video { display: none; } /* 비디오 원본은 숨김 */
+        /* 비디오 원본은 숨김 */
+        video { display: none; }
 
-        /* 화면 크기에 맞춰 유연하게 변하는 캔버스 */
         canvas {
             position: absolute;
             top: 0;
@@ -74,12 +97,28 @@
             height: 100%;
             object-fit: cover;
         }
+
+        /* 장식용 SF 그리드 디자인 요소 (코너 오버레이) */
+        #canvas-container::before {
+            content: '';
+            position: absolute;
+            top: 15px; left: 15px; width: 15px; height: 15px;
+            border-top: 3px solid #00f2fe; border-left: 3px solid #00f2fe;
+            z-index: 10; pointer-events: none;
+        }
+        #canvas-container::after {
+            content: '';
+            position: absolute;
+            bottom: 15px; right: 15px; width: 15px; height: 15px;
+            border-bottom: 3px solid #ff007f; border-right: 3px solid #ff007f;
+            z-index: 10; pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
-    <h1>📸 AI 웹캠 객체 탐지</h1>
-    <p>내 손안의 똑똑한 딥러닝 카메라</p>
+    <h1>📸 AI VISION DETECTOR</h1>
+    <p>Real-time Object Recognition</p>
 
     <div id="status">🤖 모델 로딩 중... (약 14MB)</div>
 
@@ -112,8 +151,9 @@
                 statusDiv.innerText = "⚡ 그래픽 가속 장치 최적화 중...";
                 session = await ort.InferenceSession.create('yolov8n.onnx', { executionProviders: ['webgl', 'wasm'] });
 
-                statusDiv.innerText = "🎯 탐지 가동 중! 사물을 비춰보세요.";
-                statusDiv.style.color = "#38bdf8";
+                statusDiv.innerText = "🎯 SYSTEM ONLINE: 사물을 탐지하는 중";
+                statusDiv.style.color = "#00f2fe";
+                statusDiv.classList.add('status-active');
 
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
@@ -121,7 +161,8 @@
                 requestAnimationFrame(processFrame);
             } catch (err) {
                 statusDiv.innerText = "❌ 오류: 카메라 권한을 허용해 주세요.";
-                statusDiv.style.color = "#ef4444";
+                statusDiv.style.color = "#ff4a5a";
+                statusDiv.style.borderColor = "#ff4a5a";
                 console.error(err);
             }
         }
@@ -197,18 +238,30 @@
                     const x = cx - w / 2;
                     const y = cy - h / 2;
 
-                    ctx.strokeStyle = "#22c55e";
-                    ctx.lineWidth = 4;
+                    // 🎨 탐지 사각형 디자인 변경 (네온 시안 컬러로 더 힙하게)
+                    ctx.strokeStyle = "#00f2fe";
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = "#00f2fe";
+                    ctx.shadowBlur = 10; // 사각형에 은은한 빛 반사 효과 추가
                     ctx.strokeRect(x, y, w, h);
+                    
+                    // 그림자 효과 초기화 (다음 드로잉에 영향 없도록)
+                    ctx.shadowBlur = 0;
 
-                    ctx.fillStyle = "#22c55e";
-                    const text = `${labels[classId]} ${Math.round(maxScore * 100)}%`;
-                    ctx.font = "bold 14px sans-serif";
+                    // 🏷️ 라벨 태그 디자인 변경
+                    ctx.fillStyle = "#00f2fe";
+                    const text = `${labels[classId].toUpperCase()} ${Math.round(maxScore * 100)}%`;
+                    ctx.font = "bold 12px 'Orbitron', sans-serif";
                     const textWidth = ctx.measureText(text).width;
-                    ctx.fillRect(x - 2, y - 22, textWidth + 10, 20);
+                    
+                    // 태그 배경박스 (둥근 모서리 살짝)
+                    ctx.beginPath();
+                    ctx.roundRect(x - 1, y - 24, textWidth + 14, 22, [4, 4, 0, 0]);
+                    ctx.fill();
 
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillText(text, x + 3, y - 7);
+                    // 글자색은 가독성을 위해 어두운 톤으로 매칭
+                    ctx.fillStyle = "#090514";
+                    ctx.fillText(text, x + 6, y - 8);
                 }
             }
         }
